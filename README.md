@@ -6,7 +6,9 @@ Generates interface decorators with opentracing support.
 Installation
 ------------
 
-```go get github.com/mkabischev/tracegen```
+```
+go get github.com/gojuno/tracegen
+```
 
 Example
 -------
