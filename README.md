@@ -1,7 +1,7 @@
 Tracegen
 ========
 
-Generates interface decorators with opentracing support.
+Generates interface decorators with [opentracing](http://opentracing.io) support.
 
 Installation
 ------------
