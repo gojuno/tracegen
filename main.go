@@ -64,7 +64,7 @@ func main() {
 		return nil
 	}
 
-	gen := NewDecoratorGenerator(template, []string{"github.com/opentracing/opentracing-go"}, []validatorFunc{fn})
+	gen := NewDecoratorGenerator(template, []validatorFunc{fn})
 	err := gen.Generate(flag.Arg(0), *interfaceName, *outputFile, *structName)
 	if err != nil {
 		log.Fatal(err)
@@ -78,7 +78,7 @@ type DecoratorGenerator struct {
 	validators []validatorFunc
 }
 
-func NewDecoratorGenerator(template string, imports []string, validators []validatorFunc) *DecoratorGenerator {
+func NewDecoratorGenerator(template string, validators []validatorFunc) *DecoratorGenerator {
 	return &DecoratorGenerator{
 		template:   template,
 		validators: validators,
@@ -109,9 +109,9 @@ func (g *DecoratorGenerator) Generate(sourcePackage, interfaceName, outputFile, 
 	gen.SetPackageName(destPackageName)
 	gen.SetVar("structName", outputStruct)
 	gen.AddTemplateFunc("call", FuncCall(gen))
+	gen.ImportWithAlias(destPath, "")
 
 	if sourcePath != destPath {
-		gen.ImportWithAlias(sourcePath, "")
 		gen.SetVar("interfaceName", fmt.Sprintf("%v.%v", sourcePackageName, interfaceName))
 	} else {
 		gen.SetVar("interfaceName", interfaceName)
