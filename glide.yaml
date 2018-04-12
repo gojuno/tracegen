@@ -1,4 +1,4 @@
-package: github.com/mkabischev/tracegen
+package: github.com/gojuno/tracegen
 import:
 - package: github.com/gojuno/generator
 - package: github.com/opentracing/opentracing-go
