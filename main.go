@@ -37,7 +37,7 @@ const template = `
 	{{ range $methodName, $method := . }}
 		func (t *{{$structName}}) {{$methodName}}{{signature $method}} {
 			span, ctx := opentracing.StartSpanFromContext(ctx, t.prefix + ".{{$interfaceName}}.{{$methodName}}")
-			defer span.Finish()
+			defer {{finishSpan $method}}
 
 			return t.next.{{$methodName}}({{call $method}})
 		}
@@ -72,6 +72,24 @@ func main() {
 }
 
 type validatorFunc func(s *types.Signature) error
+
+func finishSpan(gen *generator.Generator) interface{} {
+	return func(f interface{}) (string, error) {
+		results, err := gen.FuncResults(f)
+		if err != nil {
+			return "", errors.Wrap(err, "failed to parse func results")
+		}
+		for _, result := range results {
+			if result.Type == "error" {
+				return `func() {
+					ext.Error.Set(span, ` + result.Name + ` != nil)
+					span.Finish()
+				}()`, nil
+			}
+		}
+		return "span.Finish()", nil
+	}
+}
 
 type DecoratorGenerator struct {
 	template   string
@@ -109,7 +127,10 @@ func (g *DecoratorGenerator) Generate(sourcePackage, interfaceName, outputFile, 
 	gen.SetPackageName(destPackageName)
 	gen.SetVar("structName", outputStruct)
 	gen.AddTemplateFunc("call", FuncCall(gen))
+	gen.AddTemplateFunc("finishSpan", finishSpan(gen))
 	gen.ImportWithAlias(destPath, "")
+	gen.SetDefaultParamsPrefix("in")
+	gen.SetDefaultResultsPrefix("out")
 
 	if sourcePath != destPath {
 		gen.SetVar("interfaceName", fmt.Sprintf("%v.%v", sourcePackageName, interfaceName))
