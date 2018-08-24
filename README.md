@@ -38,17 +38,23 @@ func NewCacheTracer(next Cache, prefix string) *CacheTracer {
 	}
 }
 
-func (t *CacheTracer) Get(ctx context.Context, key []byte) (value []byte, err error) {
+func (t *CacheTracer) Get(in context.Context, in1 []byte) (out []byte, out1 error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, t.prefix+".Cache.Get")
-	defer span.Finish()
+	defer func() {
+		ext.Error.Set(span, out1 != nil)
+		span.Finish()
+	}()
 
-	return t.next.Get(ctx, key)
+	return t.next.Get(in, in1)
 }
 
-func (t *CacheTracer) Set(ctx context.Context, key []byte, value []byte) error {
+func (t *CacheTracer) Set(in context.Context, in1 []byte, in2 []byte) (out error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, t.prefix+".Cache.Set")
-	defer span.Finish()
+	defer func() {
+		ext.Error.Set(span, out != nil)
+		span.Finish()
+	}()
 
-	return t.next.Set(ctx, key, value)
+	return t.next.Set(in, in1, in2)
 }
 ```
