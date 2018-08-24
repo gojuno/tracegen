@@ -36,7 +36,7 @@ const template = `
 
 	{{ range $methodName, $method := . }}
 		func (t *{{$structName}}) {{$methodName}}{{signature $method}} {
-			span, ctx := opentracing.StartSpanFromContext(ctx, t.prefix + ".{{$interfaceName}}.{{$methodName}}")
+			{{startSpan $method (print "." $interfaceName "." $methodName)}}
 			defer {{finishSpan $method}}
 
 			return t.next.{{$methodName}}({{call $method}})
@@ -72,6 +72,17 @@ func main() {
 }
 
 type validatorFunc func(s *types.Signature) error
+
+func startSpan(gen *generator.Generator) interface{} {
+	return func(f interface{}, anchor string) (string, error) {
+		params, err := gen.FuncParams(f)
+		if err != nil {
+			return "", errors.Wrap(err, "failed to parse func params")
+		}
+		ctxName := params[0].Name
+		return "span, " + ctxName + " := opentracing.StartSpanFromContext(" + ctxName + ", t.prefix + \"" + anchor + "\")", nil
+	}
+}
 
 func finishSpan(gen *generator.Generator) interface{} {
 	return func(f interface{}) (string, error) {
@@ -127,6 +138,7 @@ func (g *DecoratorGenerator) Generate(sourcePackage, interfaceName, outputFile, 
 	gen.SetPackageName(destPackageName)
 	gen.SetVar("structName", outputStruct)
 	gen.AddTemplateFunc("call", FuncCall(gen))
+	gen.AddTemplateFunc("startSpan", startSpan(gen))
 	gen.AddTemplateFunc("finishSpan", finishSpan(gen))
 	gen.ImportWithAlias(destPath, "")
 	gen.SetDefaultParamsPrefix("in")
@@ -209,8 +221,7 @@ func (v *visitor) processInterface(t *types.Interface) error {
 		name := t.Method(i).Name()
 		signature := t.Method(i).Type().(*types.Signature)
 		for _, validator := range v.validators {
-			err := validator(signature)
-			if err != nil {
+			if err := validator(signature); err != nil {
 				return errors.Wrapf(err, "failed to validate method '%v'", name)
 			}
 		}
