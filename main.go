@@ -92,8 +92,15 @@ func finishSpan(gen *generator.Generator) interface{} {
 		}
 		for _, result := range results {
 			if result.Type == "error" {
+				// logger fields correspond to https://github.com/opentracing/specification/blob/master/semantic_conventions.md#log-fields-table
 				return `func() {
-					ext.Error.Set(span, ` + result.Name + ` != nil)
+					if ` + result.Name + ` != nil {
+						ext.Error.Set(span, true)
+						span.LogFields(
+							log.String("event", "error"),
+							log.String("message", ` + result.Name + `.Error()),
+						)
+					}
 					span.Finish()
 				}()`, nil
 			}
