@@ -41,7 +41,13 @@ func NewCacheTracer(next Cache, prefix string) *CacheTracer {
 func (t *CacheTracer) Get(in context.Context, in1 []byte) (out []byte, out1 error) {
 	span, in := opentracing.StartSpanFromContext(in, t.prefix+".Cache.Get")
 	defer func() {
-		ext.Error.Set(span, out1 != nil)
+		if out1 != nil {
+			ext.Error.Set(span, true)
+			span.LogFields(
+				log.String("event", "error"),
+				log.String("message", out1.Error()),
+			)
+		}
 		span.Finish()
 	}()
 
@@ -51,7 +57,13 @@ func (t *CacheTracer) Get(in context.Context, in1 []byte) (out []byte, out1 erro
 func (t *CacheTracer) Set(in context.Context, in1 []byte, in2 []byte) (out error) {
 	span, in := opentracing.StartSpanFromContext(in, t.prefix+".Cache.Set")
 	defer func() {
-		ext.Error.Set(span, out != nil)
+		if out != nil {
+			ext.Error.Set(span, true)
+			span.LogFields(
+				log.String("event", "error"),
+				log.String("message", out.Error()),
+			)
+		}
 		span.Finish()
 	}()
 
