@@ -22,11 +22,13 @@ var (
 )
 
 const template = `
+	// {{ $structName }} provides tracing for a {{ $interfaceName}}
 	type {{$structName}} struct {
 		next {{$interfaceName}}
 		prefix string
 	}
 
+	// New{{$structName}} creates a {{$structName}}
 	func New{{$structName}}(next {{$interfaceName}}, prefix string) *{{$structName}} {
 		return &{{$structName}} {
 			next: next,
@@ -35,6 +37,7 @@ const template = `
 	}
 
 	{{ range $methodName, $method := . }}
+		// {{$methodName}} is a tracing decorator for {{$methodName}}
 		func (t *{{$structName}}) {{$methodName}}{{signature $method}} {
 			{{startSpan $method (print "." $interfaceName "." $methodName)}}
 			defer {{finishSpan $method}}
