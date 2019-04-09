@@ -26,6 +26,7 @@ const template = `
 	type {{$structName}} struct {
 		next {{$interfaceName}}
 		prefix string
+		tracer opentracing.Tracer
 	}
 
 	// New{{$structName}} creates a {{$structName}}
@@ -33,6 +34,16 @@ const template = `
 		return &{{$structName}} {
 			next: next,
 			prefix: prefix,
+			tracer: opentracing.GlobalTracer(),
+		}
+	}
+
+	// New{{$structName}} creates a {{$structName}}
+	func New{{$structName}}WithTracer(next {{$interfaceName}}, prefix string, tracer opentracing.Tracer) *{{$structName}} {
+		return &{{$structName}} {
+			next: next,
+			prefix: prefix,
+			tracer: tracer,
 		}
 	}
 
@@ -83,7 +94,7 @@ func startSpan(gen *generator.Generator) interface{} {
 			return "", errors.Wrap(err, "failed to parse func params")
 		}
 		ctxName := params[0].Name
-		return "span, " + ctxName + " := opentracing.StartSpanFromContext(" + ctxName + ", t.prefix + \"" + anchor + "\")", nil
+		return "span, " + ctxName + " := opentracing.StartSpanFromContextWithTracer(" + ctxName + ", t.tracer, t.prefix + \"" + anchor + "\")", nil
 	}
 }
 
