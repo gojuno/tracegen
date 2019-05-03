@@ -1,0 +1,11 @@
+language: go
+
+go:
+  - 1.11.x
+  - tip
+
+env:
+  - GO111MODULE=on
+
+script:
+  - cd $TRAVIS_BUILD_DIR && make test
