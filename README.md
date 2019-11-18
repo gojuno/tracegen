@@ -21,7 +21,7 @@ type Cache interface {
 ```
 
 ```
-tracegen -i Cache -o example/cache_trace.go example
+tracegen -i Cache -o example/cache_trace.go ./example
 ```
 
 Will generate:
