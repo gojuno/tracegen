@@ -7,7 +7,7 @@ Installation
 ------------
 
 ```
-go get github.com/gojuno/tracegen
+go install github.com/gojuno/tracegen@latest
 ```
 
 Example
